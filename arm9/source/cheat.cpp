@@ -169,7 +169,7 @@ void CheatGame::setGameid (const std::string& id)
 	headerCRC = 0;
 	crcData = strpbrk (idData+4, HEX_CHARACTERS);
 	if (crcData) {
-		sscanf (crcData, "%x", &headerCRC);
+		sscanf (crcData, "%lx", &headerCRC);
 		// CRC is inverted in the cheat list
 		headerCRC = ~headerCRC;
 	}
