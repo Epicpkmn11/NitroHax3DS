@@ -28,7 +28,6 @@
 #include "cheat.h"
 #include "bootsplash.h"
 #include "ui.h"
-#include "nds_card.h"
 #include "cheat_engine.h"
 #include "crc.h"
 #include "version.h"
@@ -106,7 +105,7 @@ int main(int argc, const char* argv[])
 	// Delay half a second for the DS card to stabilise
 	for (int i = 0; i < 30; i++) { swiWaitForVBlank(); }
 	
-	getHeader (ndsHeader);
+	cardReadHeader ((u8*)ndsHeader);
 
 	ui.showMessage ("Finding game");
 
