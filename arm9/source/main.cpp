@@ -34,7 +34,7 @@
 #include "version.h"
 
 const char TITLE_STRING[] = "Nitro Hax " VERSION_STRING "\nWritten by Chishm";
-const char* defaultFiles[] = {"cheats.xml", "/DS/NitroHax/cheats.xml", "/NitroHax/cheats.xml", "/data/NitroHax/cheats.xml", "/cheats.xml"};
+const char* defaultFiles[] = {"usrcheat.dat", "/DS/NitroHax/usrcheat.dat", "/NitroHax/usrcheat.dat", "/data/NitroHax/usrcheat.dat", "/usrcheat.dat", "/_nds/usrcheat.dat", "/_nds/TWiLightMenu/extras/usrcheat.dat"};
 
 
 static inline void ensure (bool condition, const char* errorMsg) {
@@ -53,10 +53,9 @@ int main(int argc, const char* argv[])
 	u32 ndsHeader[0x80];
 	u32* cheatDest;
 	int curCheat = 0;
-	char gameid[4];
+	u32 gameid;
 	uint32_t headerCRC;
 	std::string filename;
-	int c;
 	FILE* cheatFile;
 	bool doFilter=false;
 	
@@ -94,7 +93,7 @@ int main(int argc, const char* argv[])
 		doFilter=true;
 	}
 	if (NULL == cheatFile) {
-		filename = ui.fileBrowser (".xml");
+		filename = ui.fileBrowser ("usrcheat.dat");
 		ensure (filename.size() > 0, "No file specified");
 		cheatFile = fopen (filename.c_str(), "rb");
 		ensure (cheatFile != NULL, "Couldn't load cheats"); 
@@ -111,14 +110,10 @@ int main(int argc, const char* argv[])
 
 	ui.showMessage ("Finding game");
 
-	memcpy (gameid, ((const char*)ndsHeader) + 12, 4);
+	gameid = ndsHeader[3];
 	headerCRC = crc32((const char*)ndsHeader, sizeof(ndsHeader));
 	
 	ui.showMessage ("Loading codes");
-	
-	c = fgetc(cheatFile);
-	ensure (c != 0xFF && c != 0xFE, "File is in an unsupported unicode encoding");
-	fseek (cheatFile, 0, SEEK_SET);
 	
 	CheatCodelist* codelist = new CheatCodelist();
 	ensure (codelist->load(cheatFile, gameid, headerCRC, doFilter), "Can't read cheat list\n");
@@ -130,16 +125,12 @@ int main(int argc, const char* argv[])
 	}
 	
 	if(codelist->getContents().empty()) {
-		filename = ui.fileBrowser (".xml");
+		filename = ui.fileBrowser ("usrcheat.dat");
 		ensure (filename.size() > 0, "No file specified");
 		cheatFile = fopen (filename.c_str(), "rb");
 		ensure (cheatFile != NULL, "Couldn't load cheats");
 		
 		ui.showMessage ("Loading codes");
-	
-		c = fgetc(cheatFile);
-		ensure (c != 0xFF && c != 0xFE, "File is in an unsupported unicode encoding");
-		fseek (cheatFile, 0, SEEK_SET);
 		
 		CheatCodelist* codelist = new CheatCodelist();
 		ensure (codelist->load(cheatFile, gameid, headerCRC, doFilter), "Can't read cheat list\n");
@@ -157,9 +148,9 @@ int main(int argc, const char* argv[])
 	cheatDest = (u32*) malloc(CHEAT_MAX_DATA_SIZE);
 	ensure (cheatDest != NULL, "Bad malloc\n");
 	
-	std::list<CheatWord> cheatList = gameCodes->getEnabledCodeData();
+	std::vector<CheatWord> cheatList = gameCodes->getEnabledCodeData();
 	
-	for (std::list<CheatWord>::iterator cheat = cheatList.begin(); cheat != cheatList.end(); cheat++) {
+	for (std::vector<CheatWord>::iterator cheat = cheatList.begin(); cheat != cheatList.end(); cheat++) {
 		cheatDest[curCheat++] = (*cheat);
 	}
 	

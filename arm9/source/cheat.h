@@ -6,7 +6,6 @@
 #include <stdio.h>
 #include <string>
 #include <vector>
-#include <list>
 #include <stdint.h>
 
 #define CHEAT_CODE_END	0xCF000000
@@ -18,15 +17,15 @@ typedef unsigned int CheatWord;
 
 class CheatFolder;
 
-class CheatBase 
+class CheatBase
 {
 private:
 	CheatFolder* parent;
-	
+
 public:
 	std::string name;
 	std::string note;
-	
+
 	CheatBase (CheatFolder* parent)
 	{
 		this->parent = parent;
@@ -37,40 +36,40 @@ public:
 		this->name = name;
 		this->parent = parent;
 	}
-	
+
 	CheatBase (const std::string name, CheatFolder* parent)
 	{
 		this->name = name;
 		this->parent = parent;
 	}
-	
-	virtual ~CheatBase () 
+
+	virtual ~CheatBase ()
 	{
 	}
-	
+
 	const char* getName (void)
 	{
 		return name.c_str();
 	}
-	
+
 	const char* getNote (void)
 	{
 		return note.c_str();
 	}
-	
+
 	CheatFolder* getParent (void)
 	{
 		return parent;
 	}
-	
-	virtual std::list<CheatWord> getEnabledCodeData(void)
+
+	virtual std::vector<CheatWord> getEnabledCodeData(void)
 	{
-		std::list<CheatWord> codeData;
+		std::vector<CheatWord> codeData;
 		return codeData;
 	}
 } ;
 
-class CheatCode : public CheatBase 
+class CheatCode : public CheatBase
 {
 public:
 	CheatCode (CheatFolder* parent) : CheatBase (parent)
@@ -80,38 +79,38 @@ public:
 		master = false;
 	}
 
-	void setEnabled (bool enable) 
+	void setEnabled (bool enable)
 	{
 		if (!always_on) {
 			enabled = enable;
 		}
 	}
-	
+
 	void toggleEnabled (void);
-	
-	bool getEnabledStatus (void) 
+
+	bool getEnabledStatus (void)
 	{
 		return enabled;
 	}
-	
+
 	bool isMaster (void)
 	{
 		return master;
 	}
-	
-	std::list<CheatWord> getCodeData(void)
+
+	std::vector<CheatWord> getCodeData(void)
 	{
 		return cheatData;
 	}
-	
-	void setCodeData (const std::string& data);
-	
-	std::list<CheatWord> getEnabledCodeData(void);
-	
+
+	void setCodeData (const CheatWord *codeData, int codeLen);
+
+	std::vector<CheatWord> getEnabledCodeData(void);
+
 	static const int CODE_WORD_LEN = 8;
-	
+
 private:
-	std::list<CheatWord> cheatData;
+	std::vector<CheatWord> cheatData;
 	bool enabled;
 	bool always_on;
 	bool master;
@@ -124,43 +123,43 @@ public:
 	{
 		allowOneOnly = false;
 	}
-	
+
 	CheatFolder (CheatFolder* parent) : CheatBase (parent)
 	{
 		allowOneOnly = false;
 	}
 
 	~CheatFolder();
-	
+
 	void addItem (CheatBase* item)
 	{
 		if (item) {
 			contents.push_back(item);
 		}
 	}
-	
+
 	void enablingSubCode (void);
 
 	void enableAll (bool enabled);
-	
-	void setAllowOneOnly (bool value) 
+
+	void setAllowOneOnly (bool value)
 	{
 		allowOneOnly = value;
 	}
-	
-	std::vector<CheatBase*> getContents(void) 
+
+	std::vector<CheatBase*> getContents(void)
 	{
 		return contents;
 	}
-	
-	std::list<CheatWord> getEnabledCodeData(void);
-	
+
+	std::vector<CheatWord> getEnabledCodeData(void);
+
 protected:
 	std::vector<CheatBase*> contents;
 
 private:
 	bool allowOneOnly;
-	
+
 } ;
 
 class CheatGame : public CheatFolder
@@ -168,46 +167,48 @@ class CheatGame : public CheatFolder
 public:
 	CheatGame (const char* name, CheatFolder* parent) : CheatFolder (name, parent)
 	{
-		memset(gameid, ' ', 4);
+		gameid = 0x20202020;
 	}
-	
+
 	CheatGame (CheatFolder* parent) : CheatFolder (parent)
 	{
-		memset(gameid, ' ', 4);
-	}
-	
-	bool checkGameid (const char gameid[4], uint32_t headerCRC)
-	{
-		return (memcmp (gameid, this->gameid, sizeof(this->gameid)) == 0) &&
-			(headerCRC == this->headerCRC);
+		gameid = 0x20202020;
 	}
 
-	void setGameid (const std::string& id);
+	bool checkGameid (uint32_t gameid, uint32_t headerCRC)
+	{
+		return (gameid == this->gameid) && (headerCRC == this->headerCRC);
+	}
+
+	void setGameid (uint32_t id, uint32_t crc);
 
 private:
-	char gameid[4];
-	uint32_t  headerCRC;
+	uint32_t gameid;
+	uint32_t headerCRC;
 } ;
 
-class CheatCodelist : public CheatFolder 
+class CheatCodelist : public CheatFolder
 {
 public:
 	CheatCodelist (void) : CheatFolder ("No codes loaded", NULL)
 	{
 	}
-	
+
 	~CheatCodelist ();
-	
-	bool load (FILE* fp, const char gameid[4], uint32_t headerCRC, bool filter);
 
-	CheatGame* getGame (const char gameid[4], uint32_t headerCRC);
-	
+	bool load (FILE* fp, uint32_t gameid, uint32_t headerCRC, bool filter);
+
+	CheatGame* getGame (uint32_t gameid, uint32_t headerCRC);
+
 private:
-	enum TOKEN_TYPE {TOKEN_DATA, TOKEN_TAG_START, TOKEN_TAG_END, TOKEN_TAG_SINGLE};
-
-	std::string nextToken (FILE* fp, TOKEN_TYPE& tokenType);
+	struct sDatIndex
+	{
+		uint32_t _gameCode;
+		uint32_t _crc32;
+		uint64_t _offset;
+	};
+	bool searchCheatData(FILE* aDat, uint32_t gamecode, uint32_t crc32, long& aPos, size_t& aSize);
 
 } ;
 
 #endif // CHEAT_H
-
