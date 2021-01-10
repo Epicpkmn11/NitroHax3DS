@@ -236,9 +236,10 @@ bool CheatCodelist::load (FILE* fp, uint32_t gameid, uint32_t headerCRC, bool fi
 		uint32_t folderCount = 1;
 		char* folderName = NULL;
 		char* folderNote = NULL;
-		bool oneOnly = false;
+		bool oneOnly = false, inFolder = false;
 		if((*ccode >> 28) & 1)
 		{
+			inFolder = true;
 			cheatFolder = dynamic_cast<CheatFolder*>(curItem);
 			if (cheatFolder) {
 				newItem = new CheatFolder (cheatFolder);
@@ -289,9 +290,11 @@ bool CheatCodelist::load (FILE* fp, uint32_t gameid, uint32_t headerCRC, bool fi
 			}
 		}
 
-		newItem = curItem->getParent();
-		if (newItem) {
-			curItem = newItem;
+		if(inFolder) {
+			newItem = curItem->getParent();
+			if (newItem) {
+				curItem = newItem;
+			}
 		}
 	}
 
