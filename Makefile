@@ -11,7 +11,7 @@ export TARGET		:=	NitroHax
 export TOPDIR		:=	$(CURDIR)
 
 export VERSION_MAJOR	:= 0
-export VERSION_MINOR	:= 99
+export VERSION_MINOR	:= 100
 export VERSTRING	:=	$(VERSION_MAJOR).$(VERSION_MINOR)
 
 
@@ -20,7 +20,7 @@ export VERSTRING	:=	$(VERSION_MAJOR).$(VERSION_MINOR)
 #---------------------------------------------------------------------------------
 # main targets
 #---------------------------------------------------------------------------------
-all: $(TARGET).nds checkarm7 checkarm9
+all: $(TARGET).dsi checkarm7 checkarm9
 
 #---------------------------------------------------------------------------------
 checkarm7:
@@ -30,8 +30,8 @@ checkarm7:
 checkarm9:
 	$(MAKE) -C arm9
 
-$(TARGET).nds	:	arm7/$(TARGET).elf arm9/$(TARGET).elf
-	ndstool	-c $(TARGET).nds -7 arm7/$(TARGET).elf -9 arm9/$(TARGET).elf \
+$(TARGET).dsi	:	arm7/$(TARGET).elf arm9/$(TARGET).elf
+	ndstool	-c $(TARGET).dsi -7 arm7/$(TARGET).elf -9 arm9/$(TARGET).elf \
 			-b $(CURDIR)/icon.bmp "Nitro Hax (usrcheat.dat);DS Game Cheat Tool;Created by Chishm" \
 			-g CHCT 01 "NTR NITROHAX" -z 80040000 -u 00030004 -a 00000038 -p 0000
 
@@ -63,7 +63,7 @@ arm9/$(TARGET).elf	:	arm9/data/load.bin arm9/source/version.h
 	$(MAKE) -C arm9
 
 #---------------------------------------------------------------------------------
-dist-bin	: $(TARGET).nds README.md LICENSE
+dist-bin	: $(TARGET).dsi README.md LICENSE
 	zip -X -9 $(TARGET)_v$(VERSTRING).zip $^
 
 dist-src	:
@@ -83,4 +83,4 @@ clean:
 	$(MAKE) -C BootLoader clean
 	rm -f arm9/data/load.bin
 	rm -f arm9/source/version.h
-	rm -f $(TARGET).ds.gba $(TARGET).nds $(TARGET).arm7 $(TARGET).arm9 $(TARGET).nds.orig.nds $(TARGET).cia
+	rm -f $(TARGET).ds.gba $(TARGET).nds $(TARGET).dsi $(TARGET).arm7 $(TARGET).arm9 $(TARGET).nds.orig.nds $(TARGET).cia
